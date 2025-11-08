@@ -1,0 +1,97 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: aircraft-booking
+
+
+  # 多数据源配置（4个数据库）
+  datasource:
+    # 元数据库（主数据源，用于航班查询）
+    meta:
+      jdbc-url: jdbc:mysql://localhost:3306/airline-meta?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      username: root
+      password: "042022"
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      # 连接池配置
+      hikari:
+        pool-name: MetaDB-Pool
+        minimum-idle: 5
+        maximum-pool-size: 20
+        connection-timeout: 30000
+        idle-timeout: 600000
+        max-lifetime: 1800000
+
+    # 航司业务库 A（CA/ZH/SC）
+    airline-a:
+      jdbc-url: jdbc:mysql://localhost:3306/airline-a?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      username: root
+      password: "042022"
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      hikari:
+        pool-name: AirlineA-Pool
+        minimum-idle: 3
+        maximum-pool-size: 10
+        connection-timeout: 30000
+        idle-timeout: 600000
+        max-lifetime: 1800000
+
+    # 航司业务库 B（CZ/MF/HU）
+    airline-b:
+      jdbc-url: jdbc:mysql://localhost:3306/airline-b?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      username: root
+      password: "042022"
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      hikari:
+        pool-name: AirlineB-Pool
+        minimum-idle: 3
+        maximum-pool-size: 10
+        connection-timeout: 30000
+        idle-timeout: 600000
+        max-lifetime: 1800000
+
+    # 航司业务库 C（MU/FM/3U）
+    airline-c:
+      jdbc-url: jdbc:mysql://localhost:3306/airline-c?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      username: root
+      password: "042022"
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      hikari:
+        pool-name: AirlineC-Pool
+        minimum-idle: 3
+        maximum-pool-size: 10
+        connection-timeout: 30000
+        idle-timeout: 600000
+        max-lifetime: 1800000
+
+# MyBatis 配置
+mybatis:
+  #mapper配置文件
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: cn.luzai.aircraftserver.mapper
+  configuration:
+    #开启驼峰命名
+    map-underscore-to-camel-case: true
+
+logging:
+  level:
+    com:
+      sky:
+        mapper: debug
+        service: info
+        controller: info
+
+app:
+  # 数据库路由配置（航司代码 -> 数据源名称）
+  datasource-routing:
+    CA: airline-a
+    ZH: airline-a
+    SC: airline-a
+    CZ: airline-b
+    MF: airline-b
+    HU: airline-b
+    MU: airline-c
+    FM: airline-c
+    3U: airline-c
+

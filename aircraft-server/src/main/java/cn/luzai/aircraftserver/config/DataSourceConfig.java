@@ -102,7 +102,7 @@ public class DataSourceConfig {
         );
 
         // 设置实体类别名包
-        sessionFactory.setTypeAliasesPackage("com.airline.booking.entity");
+        sessionFactory.setTypeAliasesPackage("cn.luzai.aircraftpojo.entity");
 
         // MyBatis 配置
         org.apache.ibatis.session.Configuration configuration = new org.apache.ibatis.session.Configuration();
