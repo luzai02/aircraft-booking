@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    dynamic:
+      datasource:
+        airline-a:
+          username: root
+          password: "042022"
+        airline-b:
+          username: root
+          password: "042022"
+        airline-c:
+          username: root
+          password: "042022"
+  # 若需修改端口，可在此覆盖
+  # server:
+  #   port: 8084
+
+  redis:
+    host: localhost
+    port: 6379
+    # password: 042022
+    database: 0
+
