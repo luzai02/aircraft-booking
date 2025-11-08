@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.luzai.aircraftserver.mapper.FlightInstanceMapper">
+
+    <!-- 结果映射：FlightSearchResponse -->
+    <resultMap id="FlightSearchResponseMap" type="cn.luzai.aircraftpojo.dto.response.FlightSearchResponse">
+        <result column="instance_id" property="instanceId"/>
+        <result column="flight_number" property="flightNumber"/>
+        <result column="airline_code" property="airlineCode"/>
+        <result column="airline_name" property="airlineName"/>
+        <result column="depart_airport" property="departAirport"/>
+        <result column="depart_airport_name" property="departAirportName"/>
+        <result column="arrival_airport" property="arrivalAirport"/>
+        <result column="arrival_airport_name" property="arrivalAirportName"/>
+        <result column="depart_datetime" property="departDatetime"/>
+        <result column="arrival_datetime" property="arrivalDatetime"/>
+        <result column="flight_duration_min" property="flightDurationMin"/>
+        <result column="price" property="price"/>
+        <result column="available_seats" property="availableSeats"/>
+        <result column="aircraft_code" property="aircraftCode"/>
+        <result column="aircraft_name" property="aircraftName"/>
+    </resultMap>
+
+    <!-- 查询航班（关联查询航司、机场、机型信息） -->
+    <select id="searchFlights" resultMap="FlightSearchResponseMap">
+        SELECT
+            fi.instance_id,
+            fi.flight_number,
+            fi.airline_code,
+            al.airline_name,
+            fi.depart_airport,
+            ap1.airport_name AS depart_airport_name,
+            fi.arrival_airport,
+            ap2.airport_name AS arrival_airport_name,
+            fi.depart_datetime,
+            fi.arrival_datetime,
+            TIMESTAMPDIFF(MINUTE, fi.depart_datetime, fi.arrival_datetime) AS flight_duration_min,
+            fi.price,
+            fi.available_seats,
+            fi.aircraft_code,
+            act.aircraft_name
+        FROM flight_instance fi
+                 INNER JOIN airline al ON fi.airline_code = al.airline_code
+                 INNER JOIN airport ap1 ON fi.depart_airport = ap1.airport_code
+                 INNER JOIN airport ap2 ON fi.arrival_airport = ap2.airport_code
+                 INNER JOIN aircraft_type act ON fi.aircraft_code = act.aircraft_code
+        WHERE fi.depart_airport = #{departAirport}
+          AND fi.arrival_airport = #{arrivalAirport}
+          AND fi.flight_date = #{flightDate}
+          AND fi.available_seats &gt;= #{passengerCount}
+          AND fi.status = 'AVAILABLE'
+        ORDER BY fi.depart_datetime ASC
+    </select>
+
+    <!-- 根据实例ID查询航班实例 -->
+    <select id="findByInstanceId" resultType="cn.luzai.aircraftpojo.entity.meta.FlightInstance">
+        SELECT
+            instance_id AS instanceId,
+            flight_number AS flightNumber,
+            airline_code AS airlineCode,
+            flight_date AS flightDate,
+            aircraft_code AS aircraftCode,
+            total_seats AS totalSeats,
+            available_seats AS availableSeats,
+            depart_airport AS departAirport,
+            arrival_airport AS arrivalAirport,
+            depart_datetime AS departDatetime,
+            arrival_datetime AS arrivalDatetime,
+            price,
+            status,
+            last_sync_time AS lastSyncTime
+        FROM flight_instance
+        WHERE instance_id = #{instanceId}
+    </select>
+
+    <!-- 更新剩余座位数（扣减） -->
+    <update id="decreaseAvailableSeats">
+        UPDATE flight_instance
+        SET available_seats = available_seats - #{seatCount},
+            last_sync_time = NOW()
+        WHERE instance_id = #{instanceId}
+          AND available_seats &gt;= #{seatCount}
+    </update>
+
+</mapper>

@@ -11,6 +11,9 @@ spring:
         airline-c:
           username: root
           password: "042022"
+        airline-meta:
+          username: root
+          password: "042022"
   # 若需修改端口，可在此覆盖
   # server:
   #   port: 8084
