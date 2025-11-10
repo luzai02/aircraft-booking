@@ -5,6 +5,7 @@ import java.lang.annotation.*;
 /**
  * 目标数据源注解
  * 用法：@TargetDataSource("airline-a")
+ * 注解在类或方法上，指定该类或方法使用的数据源
  */
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)

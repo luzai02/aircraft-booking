@@ -19,6 +19,9 @@ import java.lang.reflect.Method;
 @Component
 public class DataSourceAspect {
 
+    // todo 重新学习一下 aop
+    // 环绕通知，此注解标注的通知方法在目标方法前、后都被执行
+    // 拦截标注了 @TargetDataSource 注解的方法
     @Around("@annotation(cn.luzai.aircraftserver.annotation.TargetDataSource)")
     public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();

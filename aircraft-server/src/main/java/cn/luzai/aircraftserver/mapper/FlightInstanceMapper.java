@@ -11,23 +11,28 @@ import java.util.List;
 /**
  * 航班实例 Mapper 接口
  */
+/**
+ * 航班实例 Mapper 接口
+ */
 @Mapper
 public interface FlightInstanceMapper {
 
     /**
-     * 查询航班（带关联查询，返回完整信息）
+     * 查询航班（支持动态排序）
      *
      * @param departAirport 出发机场代码
      * @param arrivalAirport 到达机场代码
      * @param flightDate 出行日期
      * @param passengerCount 出行人数
+     * @param sortType 排序类型（PRICE/TIME/null）
      * @return 航班查询结果列表
      */
     List<FlightSearchResponse> searchFlights(
             @Param("departAirport") String departAirport,
             @Param("arrivalAirport") String arrivalAirport,
             @Param("flightDate") LocalDate flightDate,
-            @Param("passengerCount") Integer passengerCount
+            @Param("passengerCount") Integer passengerCount,
+            @Param("sortType") String sortType
     );
 
     /**

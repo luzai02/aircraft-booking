@@ -23,35 +23,47 @@
         <result column="aircraft_name" property="aircraftName"/>
     </resultMap>
 
-    <!-- 查询航班（关联查询航司、机场、机型信息） -->
+    <!-- 查询航班（支持动态排序） -->
     <select id="searchFlights" resultMap="FlightSearchResponseMap">
         SELECT
-            fi.instance_id,
-            fi.flight_number,
-            fi.airline_code,
-            al.airline_name,
-            fi.depart_airport,
-            ap1.airport_name AS depart_airport_name,
-            fi.arrival_airport,
-            ap2.airport_name AS arrival_airport_name,
-            fi.depart_datetime,
-            fi.arrival_datetime,
-            TIMESTAMPDIFF(MINUTE, fi.depart_datetime, fi.arrival_datetime) AS flight_duration_min,
-            fi.price,
-            fi.available_seats,
-            fi.aircraft_code,
-            act.aircraft_name
+        fi.instance_id,
+        fi.flight_number,
+        fi.airline_code,
+        al.airline_name,
+        fi.depart_airport,
+        ap1.airport_name AS depart_airport_name,
+        fi.arrival_airport,
+        ap2.airport_name AS arrival_airport_name,
+        fi.depart_datetime,
+        fi.arrival_datetime,
+        TIMESTAMPDIFF(MINUTE, fi.depart_datetime, fi.arrival_datetime) AS flight_duration_min,
+        fi.price,
+        fi.available_seats,
+        fi.aircraft_code,
+        act.aircraft_name
         FROM flight_instance fi
-                 INNER JOIN airline al ON fi.airline_code = al.airline_code
-                 INNER JOIN airport ap1 ON fi.depart_airport = ap1.airport_code
-                 INNER JOIN airport ap2 ON fi.arrival_airport = ap2.airport_code
-                 INNER JOIN aircraft_type act ON fi.aircraft_code = act.aircraft_code
+        INNER JOIN airline al ON fi.airline_code = al.airline_code
+        INNER JOIN airport ap1 ON fi.depart_airport = ap1.airport_code
+        INNER JOIN airport ap2 ON fi.arrival_airport = ap2.airport_code
+        INNER JOIN aircraft_type act ON fi.aircraft_code = act.aircraft_code
         WHERE fi.depart_airport = #{departAirport}
-          AND fi.arrival_airport = #{arrivalAirport}
-          AND fi.flight_date = #{flightDate}
-          AND fi.available_seats &gt;= #{passengerCount}
-          AND fi.status = 'AVAILABLE'
-        ORDER BY fi.depart_datetime ASC
+        AND fi.arrival_airport = #{arrivalAirport}
+        AND fi.flight_date = #{flightDate}
+        AND fi.available_seats &gt;= #{passengerCount}
+        AND fi.status = 'AVAILABLE'
+
+        <!-- 动态排序 -->
+        <choose>
+            <when test="sortType == 'PRICE'">
+                ORDER BY fi.price ASC
+            </when>
+            <when test="sortType == 'TIME'">
+                ORDER BY TIMESTAMPDIFF(MINUTE, fi.depart_datetime, fi.arrival_datetime) ASC
+            </when>
+            <otherwise>
+                ORDER BY fi.depart_datetime ASC
+            </otherwise>
+        </choose>
     </select>
 
     <!-- 根据实例ID查询航班实例 -->

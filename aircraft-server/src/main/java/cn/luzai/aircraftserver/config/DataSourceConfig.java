@@ -25,10 +25,9 @@ import java.util.Map;
  * 多数据源配置
  */
 @Configuration
+// 扫描 Mapper 接口所在的包，并指定 SqlSessionFactory，以便 MyBatis 能够正确地找到和使用这些接口
 @MapperScan(basePackages = "cn.luzai.aircraftserver.mapper", sqlSessionFactoryRef = "sqlSessionFactory")
 public class DataSourceConfig {
-
-    // ==================== 1. 元数据库（主数据源） ====================
 
     @Bean(name = "metaDataSource")
     @ConfigurationProperties(prefix = "spring.datasource.meta")
@@ -37,7 +36,6 @@ public class DataSourceConfig {
         return DataSourceBuilder.create().type(HikariDataSource.class).build();
     }
 
-    // ==================== 2. 航司业务库 A ====================
 
     @Bean(name = "airlineADataSource")
     @ConfigurationProperties(prefix = "spring.datasource.airline-a")
@@ -45,7 +43,6 @@ public class DataSourceConfig {
         return DataSourceBuilder.create().type(HikariDataSource.class).build();
     }
 
-    // ==================== 3. 航司业务库 B ====================
 
     @Bean(name = "airlineBDataSource")
     @ConfigurationProperties(prefix = "spring.datasource.airline-b")
@@ -53,7 +50,6 @@ public class DataSourceConfig {
         return DataSourceBuilder.create().type(HikariDataSource.class).build();
     }
 
-    // ==================== 4. 航司业务库 C ====================
 
     @Bean(name = "airlineCDataSource")
     @ConfigurationProperties(prefix = "spring.datasource.airline-c")
@@ -61,8 +57,7 @@ public class DataSourceConfig {
         return DataSourceBuilder.create().type(HikariDataSource.class).build();
     }
 
-    // ==================== 5. 动态数据源（整合所有数据源） ====================
-
+    // 动态数据源（整合所有数据源）
     @Bean(name = "dynamicDataSource")
     public DataSource dynamicDataSource(
             @Qualifier("metaDataSource") DataSource metaDataSource,
@@ -75,7 +70,7 @@ public class DataSourceConfig {
         // 设置默认数据源（元数据库）
         dynamicDataSource.setDefaultTargetDataSource(metaDataSource);
 
-        // 配置所有数据源
+        // 使用map来存放多个数据源
         Map<Object, Object> targetDataSources = new HashMap<>();
         targetDataSources.put("meta", metaDataSource);
         targetDataSources.put("airline-a", airlineADataSource);
@@ -88,8 +83,9 @@ public class DataSourceConfig {
         return dynamicDataSource;
     }
 
-    // ==================== 6. SqlSessionFactory ====================
 
+    // todo 没理解？？？
+    // 整合动态数据源，并为 MyBatis 提供一个配置完善的 SqlSessionFactory
     @Bean(name = "sqlSessionFactory")
     @Primary
     public SqlSessionFactory sqlSessionFactory(@Qualifier("dynamicDataSource") DataSource dynamicDataSource) throws Exception {
@@ -114,8 +110,8 @@ public class DataSourceConfig {
         return sessionFactory.getObject();
     }
 
-    // ==================== 7. 事务管理器 ====================
 
+    // 事务管理器
     @Bean(name = "transactionManager")
     @Primary
     public DataSourceTransactionManager transactionManager(@Qualifier("dynamicDataSource") DataSource dynamicDataSource) {
