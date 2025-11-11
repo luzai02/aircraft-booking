@@ -90,4 +90,51 @@
           AND status = #{oldStatus}
     </update>
 
+    <!-- 查询用户的订单列表 -->
+    <select id="findUserBookings" resultType="cn.luzai.aircraftpojo.dto.response.BookingListResponse">
+        SELECT
+        b.booking_id AS bookingId,
+        b.status,
+        bs.flight_number AS flightNumber,
+        bs.airline_code,
+        bs.depart_airport AS departAirport,
+        bs.arrival_airport AS arrivalAirport,
+        bs.depart_datetime AS departDatetime,
+        bs.arrival_datetime AS arrivalDatetime,
+        b.total_price AS totalPrice,
+        b.booking_time AS bookingTime,
+        CASE
+        WHEN b.status IN ('HOLD', 'CONFIRMED') AND bs.depart_datetime > NOW() THEN TRUE
+        ELSE FALSE
+        END AS cancellable
+        FROM booking b
+        INNER JOIN booking_segment bs ON b.booking_id = bs.booking_id
+        WHERE b.contact_passenger_id IN (
+        SELECT passenger_id
+        FROM passenger
+        WHERE 1=1
+        <if test="phone != null and phone != ''">
+            AND phone = #{phone}
+        </if>
+        <if test="idNumber != null and idNumber != ''">
+            AND id_number = #{idNumber}
+        </if>
+        )
+        <if test="status != null and status != ''">
+            AND b.status = #{status}
+        </if>
+        AND b.booking_time >= #{startTime}
+        ORDER BY b.booking_time DESC
+    </select>
+
+    <!-- 取消订单 -->
+    <update id="cancelBooking">
+        UPDATE booking
+        SET status = 'CANCELLED',
+            cancel_time = #{cancelTime},
+            remark = CONCAT(IFNULL(remark, ''), ' [取消原因: ', #{cancelReason}, ']')
+        WHERE booking_id = #{bookingId}
+          AND status IN ('HOLD', 'CONFIRMED')
+    </update>
+
 </mapper>

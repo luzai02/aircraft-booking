@@ -96,4 +96,13 @@
           AND available_seats &gt;= #{seatCount}
     </update>
 
+    <!-- 恢复剩余座位数 -->
+    <update id="increaseAvailableSeats">
+        UPDATE flight_instance
+        SET available_seats = available_seats + #{seatCount},
+            last_sync_time = NOW()
+        WHERE instance_id = #{instanceId}
+    </update>
+
+
 </mapper>

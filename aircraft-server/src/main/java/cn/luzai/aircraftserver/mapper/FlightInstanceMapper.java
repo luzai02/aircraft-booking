@@ -54,4 +54,16 @@ public interface FlightInstanceMapper {
             @Param("instanceId") String instanceId,
             @Param("seatCount") Integer seatCount
     );
+
+    /**
+     * 增加剩余座位数（恢复余座）
+     *
+     * @param instanceId 航班实例ID
+     * @param seatCount 需要恢复的座位数
+     * @return 影响行数
+     */
+    int increaseAvailableSeats(
+            @Param("instanceId") String instanceId,
+            @Param("seatCount") Integer seatCount
+    );
 }

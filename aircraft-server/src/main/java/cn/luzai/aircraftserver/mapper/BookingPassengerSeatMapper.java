@@ -27,4 +27,12 @@ public interface BookingPassengerSeatMapper {
      * @return 分配记录列表
      */
     List<BookingPassengerSeat> findByBookingId(@Param("bookingId") String bookingId);
+
+    /**
+     * 查询订单的乘客姓名列表
+     *
+     * @param bookingId 订单号
+     * @return 乘客姓名列表
+     */
+    List<String> findPassengerNamesByBookingId(@Param("bookingId") String bookingId);
 }

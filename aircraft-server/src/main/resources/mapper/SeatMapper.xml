@@ -81,4 +81,15 @@
           AND status = 'LOCKED'
     </update>
 
+    <!-- 释放已售出的座位 -->
+    <update id="releaseSoldSeats">
+        UPDATE seat
+        SET status = 'AVAILABLE',
+            booking_id = NULL,
+            passenger_id = NULL,
+            update_time = NOW()
+        WHERE booking_id = #{bookingId}
+          AND status = 'SOLD'
+    </update>
+
 </mapper>

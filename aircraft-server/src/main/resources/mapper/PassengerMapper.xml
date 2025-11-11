@@ -65,4 +65,18 @@
         LIMIT 1
     </select>
 
+    <select id="findById" resultType="cn.luzai.aircraftpojo.entity.core.Passenger">
+        SELECT
+            passenger_id AS passengerId,
+            passenger_name AS passengerName,
+            id_type AS idType,
+            id_number AS idNumber,
+            phone,
+            email,
+            passenger_type AS passengerType,
+            create_time AS createTime
+        FROM passenger
+        WHERE passenger_id = #{passengerId}
+    </select>
+
 </mapper>

@@ -46,4 +46,12 @@
         WHERE booking_id = #{bookingId}
     </select>
 
+    <!-- 查询订单的乘客姓名列表 -->
+    <select id="findPassengerNamesByBookingId" resultType="java.lang.String">
+        SELECT p.passenger_name
+        FROM booking_passenger_seat bps
+                 INNER JOIN passenger p ON bps.passenger_id = p.passenger_id
+        WHERE bps.booking_id = #{bookingId}
+    </select>
+
 </mapper>

@@ -67,4 +67,12 @@ public interface SeatMapper {
      * @return 影响行数
      */
     int releaseSeats(@Param("bookingId") String bookingId);
+
+    /**
+     * 根据订单号释放座位（SOLD → AVAILABLE）
+     *
+     * @param bookingId 订单号
+     * @return 影响行数
+     */
+    int releaseSoldSeats(@Param("bookingId") String bookingId);
 }

@@ -35,4 +35,9 @@ public interface PassengerMapper {
      * @return 乘客信息
      */
     Passenger findByIdNumber(@Param("idNumber") String idNumber);
+
+    /**
+     * 根据乘客ID查询乘客信息
+     */
+    Passenger findById(@Param("passengerId") Long passengerId);
 }
