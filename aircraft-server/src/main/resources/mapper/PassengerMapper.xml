@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.luzai.aircraftserver.mapper.PassengerMapper">
+
+    <!-- 插入乘客 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="passengerId">
+        INSERT INTO passenger (
+            passenger_name,
+            id_type,
+            id_number,
+            phone,
+            email,
+            passenger_type,
+            create_time
+        ) VALUES (
+                     #{passengerName},
+                     #{idType},
+                     #{idNumber},
+                     #{phone},
+                     #{email},
+                     #{passengerType},
+                     NOW()
+                 )
+    </insert>
+
+    <!-- 批量插入乘客 -->
+    <insert id="batchInsert" useGeneratedKeys="true" keyProperty="passengerId">
+        INSERT INTO passenger (
+        passenger_name,
+        id_type,
+        id_number,
+        phone,
+        email,
+        passenger_type,
+        create_time
+        ) VALUES
+        <foreach collection="passengers" item="p" separator=",">
+            (
+            #{p.passengerName},
+            #{p.idType},
+            #{p.idNumber},
+            #{p.phone},
+            #{p.email},
+            #{p.passengerType},
+            NOW()
+            )
+        </foreach>
+    </insert>
+
+    <!-- 根据证件号查询乘客 -->
+    <select id="findByIdNumber" resultType="cn.luzai.aircraftpojo.entity.core.Passenger">
+        SELECT
+            passenger_id AS passengerId,
+            passenger_name AS passengerName,
+            id_type AS idType,
+            id_number AS idNumber,
+            phone,
+            email,
+            passenger_type AS passengerType,
+            create_time AS createTime
+        FROM passenger
+        WHERE id_number = #{idNumber}
+        LIMIT 1
+    </select>
+
+</mapper>

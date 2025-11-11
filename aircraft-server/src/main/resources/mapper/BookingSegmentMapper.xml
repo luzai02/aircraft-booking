@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.luzai.aircraftserver.mapper.BookingSegmentMapper">
+
+    <!-- 插入订单航段 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="segmentId">
+        INSERT INTO booking_segment (
+            booking_id,
+            sequence,
+            instance_id,
+            flight_number,
+            airline_code,
+            depart_airport,
+            arrival_airport,
+            depart_datetime,
+            arrival_datetime,
+            seat_count,
+            segment_price,
+            reservation_id
+        ) VALUES (
+                     #{bookingId},
+                     #{sequence},
+                     #{instanceId},
+                     #{flightNumber},
+                     #{airlineCode},
+                     #{departAirport},
+                     #{arrivalAirport},
+                     #{departDatetime},
+                     #{arrivalDatetime},
+                     #{seatCount},
+                     #{segmentPrice},
+                     #{reservationId}
+                 )
+    </insert>
+
+    <!-- 根据订单号查询航段列表 -->
+    <select id="findByBookingId" resultType="cn.luzai.aircraftpojo.entity.core.BookingSegment">
+        SELECT
+            segment_id AS segmentId,
+            booking_id AS bookingId,
+            sequence,
+            instance_id AS instanceId,
+            flight_number AS flightNumber,
+            airline_code AS airlineCode,
+            depart_airport AS departAirport,
+            arrival_airport AS arrivalAirport,
+            depart_datetime AS departDatetime,
+            arrival_datetime AS arrivalDatetime,
+            seat_count AS seatCount,
+            segment_price AS segmentPrice,
+            reservation_id AS reservationId
+        FROM booking_segment
+        WHERE booking_id = #{bookingId}
+        ORDER BY sequence
+    </select>
+
+</mapper>

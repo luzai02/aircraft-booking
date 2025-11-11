@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.luzai.aircraftserver.mapper.SeatMapper">
+
+    <!-- 查询座位图 -->
+    <select id="findSeatMapByInstanceId" resultType="cn.luzai.aircraftpojo.dto.response.SeatMapResponse$SeatInfo">
+        SELECT
+            seat_id AS seatId,
+            `row_number` AS rowNumber,
+            seat_letter AS seatLetter,
+            seat_number AS seatNumber,
+            seat_type AS seatType,
+            status
+        FROM seat
+        WHERE instance_id = #{instanceId}
+        ORDER BY `row_number`, seat_letter
+    </select>
+
+    <!-- 根据座位号查询座位 -->
+    <select id="findByInstanceIdAndSeatNumbers" resultType="cn.luzai.aircraftpojo.entity.core.Seat">
+        SELECT
+        seat_id AS seatId,
+        instance_id AS instanceId,
+        `row_number` AS rowNumber,
+        seat_letter AS seatLetter,
+        seat_number AS seatNumber,
+        seat_type AS seatType,
+        status,
+        lock_expire_at AS lockExpireAt,
+        booking_id AS bookingId,
+        passenger_id AS passengerId,
+        create_time AS createTime,
+        update_time AS updateTime
+        FROM seat
+        WHERE instance_id = #{instanceId}
+        AND seat_number IN
+        <foreach collection="seatNumbers" item="seatNumber" open="(" separator="," close=")">
+            #{seatNumber}
+        </foreach>
+    </select>
+
+    <!-- 批量锁定座位 -->
+    <update id="lockSeats">
+        UPDATE seat
+        SET status = 'LOCKED',
+        booking_id = #{bookingId},
+        lock_expire_at = #{lockExpireAt},
+        update_time = NOW()
+        WHERE seat_id IN
+        <foreach collection="seatIds" item="seatId" open="(" separator="," close=")">
+            #{seatId}
+        </foreach>
+        AND status = 'AVAILABLE'
+    </update>
+
+    <!-- 确认座位 -->
+    <update id="confirmSeats">
+        UPDATE seat
+        SET status = 'SOLD',
+        passenger_id = #{passengerId},
+        lock_expire_at = NULL,
+        update_time = NOW()
+        WHERE seat_id IN
+        <foreach collection="seatIds" item="seatId" open="(" separator="," close=")">
+            #{seatId}
+        </foreach>
+        AND status = 'LOCKED'
+    </update>
+
+    <!-- 释放座位 -->
+    <update id="releaseSeats">
+        UPDATE seat
+        SET status = 'AVAILABLE',
+            booking_id = NULL,
+            passenger_id = NULL,
+            lock_expire_at = NULL,
+            update_time = NOW()
+        WHERE booking_id = #{bookingId}
+          AND status = 'LOCKED'
+    </update>
+
+</mapper>

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.luzai.aircraftserver.mapper.BookingMapper">
+
+    <!-- 插入订单 -->
+    <insert id="insert">
+        INSERT INTO booking (
+            booking_id,
+            booking_type,
+            passenger_count,
+            contact_passenger_id,
+            total_original_price,
+            discount_amount,
+            total_price,
+            currency,
+            status,
+            hold_expire_at,
+            booking_time,
+            client_token,
+            remark
+        ) VALUES (
+                     #{bookingId},
+                     #{bookingType},
+                     #{passengerCount},
+                     #{contactPassengerId},
+                     #{totalOriginalPrice},
+                     #{discountAmount},
+                     #{totalPrice},
+                     #{currency},
+                     #{status},
+                     #{holdExpireAt},
+                     #{bookingTime},
+                     #{clientToken},
+                     #{remark}
+                 )
+    </insert>
+
+    <!-- 根据订单号查询 -->
+    <select id="findByBookingId" resultType="cn.luzai.aircraftpojo.entity.core.Booking">
+        SELECT
+            booking_id AS bookingId,
+            booking_type AS bookingType,
+            passenger_count AS passengerCount,
+            contact_passenger_id AS contactPassengerId,
+            total_original_price AS totalOriginalPrice,
+            discount_amount AS discountAmount,
+            total_price AS totalPrice,
+            currency,
+            status,
+            hold_expire_at AS holdExpireAt,
+            booking_time AS bookingTime,
+            payment_time AS paymentTime,
+            cancel_time AS cancelTime,
+            client_token AS clientToken,
+            remark
+        FROM booking
+        WHERE booking_id = #{bookingId}
+    </select>
+
+    <!-- 根据客户端Token查询（幂等性） -->
+    <select id="findByClientToken" resultType="cn.luzai.aircraftpojo.entity.core.Booking">
+        SELECT
+            booking_id AS bookingId,
+            booking_type AS bookingType,
+            passenger_count AS passengerCount,
+            contact_passenger_id AS contactPassengerId,
+            total_original_price AS totalOriginalPrice,
+            discount_amount AS discountAmount,
+            total_price AS totalPrice,
+            currency,
+            status,
+            hold_expire_at AS holdExpireAt,
+            booking_time AS bookingTime,
+            payment_time AS paymentTime,
+            cancel_time AS cancelTime,
+            client_token AS clientToken,
+            remark
+        FROM booking
+        WHERE client_token = #{clientToken}
+    </select>
+
+    <!-- 更新订单状态 -->
+    <update id="updateStatus">
+        UPDATE booking
+        SET status = #{newStatus}
+#             update_time = NOW()
+        WHERE booking_id = #{bookingId}
+          AND status = #{oldStatus}
+    </update>
+
+</mapper>

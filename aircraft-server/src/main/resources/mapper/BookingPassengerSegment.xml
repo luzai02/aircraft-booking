@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.luzai.aircraftserver.mapper.BookingPassengerSeatMapper">
+
+    <!-- 批量插入乘客座位关联 -->
+    <insert id="batchInsert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO booking_passenger_seat (
+        booking_id,
+        segment_id,
+        passenger_id,
+        seat_id,
+        seat_number,
+        seat_preference,
+        check_in_status,
+        check_in_time
+        ) VALUES
+        <foreach collection="records" item="record" separator=",">
+            (
+            #{record.bookingId},
+            #{record.segmentId},
+            #{record.passengerId},
+            #{record.seatId},
+            #{record.seatNumber},
+            #{record.seatPreference},
+            'NOT_CHECKED',
+            NULL
+            )
+        </foreach>
+    </insert>
+
+    <!-- 根据订单号查询乘客座位分配 -->
+    <select id="findByBookingId" resultType="cn.luzai.aircraftpojo.entity.core.BookingPassengerSeat">
+        SELECT
+            id,
+            booking_id AS bookingId,
+            segment_id AS segmentId,
+            passenger_id AS passengerId,
+            seat_id AS seatId,
+            seat_number AS seatNumber,
+            seat_preference AS seatPreference,
+            check_in_status AS checkInStatus,
+            check_in_time AS checkInTime
+        FROM booking_passenger_seat
+        WHERE booking_id = #{bookingId}
+    </select>
+
+</mapper>
