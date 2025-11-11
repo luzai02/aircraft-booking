@@ -38,42 +38,75 @@ public class BookingCancelService {
         log.info("开始取消订单，bookingId={}, reason={}",
                 request.getBookingId(), request.getCancelReason());
 
-        String dataSource = null;
+        Booking booking = null;
+        List<BookingSegment> segments = null;
+        String targetDataSource = null;
 
         try {
-            // Step 1: 查询订单信息（需要遍历3个业务库）
-            Booking booking = findBookingFromAllDataSources(request.getBookingId());
+            // ============================================================
+            // Step 1: 遍历业务库查询订单和航段
+            // ============================================================
+            for (String dataSource : List.of("airline-a", "airline-b", "airline-c")) {
+                try {
+                    DataSourceContextHolder.setDataSource(dataSource);
+                    log.debug("尝试查询数据源: {}", dataSource);
 
+                    // 查询订单
+                    booking = bookingMapper.findByBookingId(request.getBookingId());
+
+                    if (booking != null) {
+                        log.info("在数据源 {} 中找到订单", dataSource);
+
+                        // 查询航段
+                        segments = bookingSegmentMapper.findByBookingId(request.getBookingId());
+
+                        targetDataSource = dataSource;
+                        break;  // 找到订单后跳出循环（不清除数据源）
+                    }
+
+                } catch (Exception e) {
+                    log.error("查询数据源 {} 失败", dataSource, e);
+                } finally {
+                    // 只有在没找到订单时才清除数据源
+                    if (booking == null) {
+                        DataSourceContextHolder.clearDataSource();
+                    }
+                }
+            }
+
+            // ============================================================
+            // Step 2: 校验订单是否存在
+            // ============================================================
             if (booking == null) {
                 throw new BusinessException("订单不存在");
             }
 
-            // Step 2: 校验订单状态
+            if (segments == null || segments.isEmpty()) {
+                throw new BusinessException("订单航段信息不存在");
+            }
+
+            // ============================================================
+            // Step 3: 校验订单状态
+            // ============================================================
             if (!BookingStatus.HOLD.equals(booking.getStatus()) &&
                     !BookingStatus.CONFIRMED.equals(booking.getStatus())) {
                 throw new BusinessException("订单状态不允许取消，当前状态: " + booking.getStatus().getDescription());
             }
 
-            // Step 3: 查询航段信息
-            List<BookingSegment> segments = bookingSegmentMapper.findByBookingId(request.getBookingId());
-
-            if (segments.isEmpty()) {
-                throw new BusinessException("订单航段信息不存在");
-            }
-
             BookingSegment segment = segments.get(0);
 
+            // ============================================================
             // Step 4: 校验是否已起飞
+            // ============================================================
             if (segment.getDepartDatetime().isBefore(LocalDateTime.now())) {
                 throw new BusinessException("航班已起飞，无法取消订单");
             }
 
-            // Step 5: 确定数据源
-            dataSource = getDataSourceByAirlineCode(segment.getAirlineCode());
-            DataSourceContextHolder.setDataSource(dataSource);
-            log.info("切换到业务库: {}", dataSource);
+            // ============================================================
+            // Step 5: 取消订单（数据源已经是正确的业务库）
+            // ============================================================
+            log.info("当前数据源: {}", targetDataSource);
 
-            // Step 6: 取消订单（更新订单状态）
             LocalDateTime cancelTime = LocalDateTime.now();
             int updated = bookingMapper.cancelBooking(
                     request.getBookingId(),
@@ -87,11 +120,15 @@ public class BookingCancelService {
 
             log.info("订单状态更新成功，bookingId={}", request.getBookingId());
 
-            // Step 7: 释放座位（SOLD → AVAILABLE）
+            // ============================================================
+            // Step 6: 释放座位（SOLD → AVAILABLE）
+            // ============================================================
             int releasedSeats = seatMapper.releaseSoldSeats(request.getBookingId());
             log.info("释放座位成功，数量: {}", releasedSeats);
 
-            // Step 8: 恢复元数据库的余座
+            // ============================================================
+            // Step 7: 恢复元数据库的余座
+            // ============================================================
             DataSourceContextHolder.setDataSource("meta");
             log.debug("切换到数据源: meta，准备恢复余座");
 
@@ -107,8 +144,10 @@ public class BookingCancelService {
                 log.warn("恢复余座失败，instanceId={}", segment.getInstanceId());
             }
 
-            // Step 9: 记录操作日志
-            DataSourceContextHolder.setDataSource(dataSource);
+            // ============================================================
+            // Step 8: 记录操作日志
+            // ============================================================
+            DataSourceContextHolder.setDataSource(targetDataSource);
             logBookingOperation(
                     request.getBookingId(),
                     "CANCEL",
@@ -141,29 +180,6 @@ public class BookingCancelService {
     }
 
     /**
-     * 从所有业务库查询订单
-     */
-    private Booking findBookingFromAllDataSources(String bookingId) {
-        for (String dataSource : List.of("airline-a", "airline-b", "airline-c")) {
-            try {
-                DataSourceContextHolder.setDataSource(dataSource);
-                Booking booking = bookingMapper.findByBookingId(bookingId);
-
-                if (booking != null) {
-                    log.debug("在数据源 {} 中找到订单", dataSource);
-                    return booking;
-                }
-            } catch (Exception e) {
-                log.error("查询数据源 {} 失败", dataSource, e);
-            } finally {
-                DataSourceContextHolder.clearDataSource();
-            }
-        }
-
-        return null;
-    }
-
-    /**
      * 记录订单操作日志
      */
     private void logBookingOperation(String bookingId, String operation,
@@ -178,22 +194,5 @@ public class BookingCancelService {
                 .build();
 
         bookingLogMapper.insert(log);
-    }
-
-    /**
-     * 根据航司代码获取数据源名称
-     */
-    private String getDataSourceByAirlineCode(String airlineCode) {
-        Map<String, String> mapping = Map.of(
-                "CA", "airline-a", "ZH", "airline-a", "SC", "airline-a",
-                "CZ", "airline-b", "MF", "airline-b", "HU", "airline-b",
-                "MU", "airline-c", "FM", "airline-c", "3U", "airline-c"
-        );
-
-        String dataSource = mapping.get(airlineCode);
-        if (dataSource == null) {
-            throw new BusinessException("未知的航司代码: " + airlineCode);
-        }
-        return dataSource;
     }
 }
