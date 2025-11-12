@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>芜湖起飞 - 机票预订平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+
+    <!-- Tailwind 配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1E88E5',
+                        secondary: '#FF9800',
+                        neutral: '#F5F7FA',
+                        dark: '#263238',
+                        success: '#4CAF50',
+                        danger: '#F44336',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                },
+            }
+        }
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .card-shadow {
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            }
+            .nav-shadow {
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            }
+            .transition-custom {
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 font-sans text-dark">
+<!-- 顶部导航栏 -->
+<header class="bg-white nav-shadow sticky top-0 z-50">
+    <div class="container mx-auto px-4">
+        <div class="flex items-center justify-between h-16">
+            <!-- 品牌标识 -->
+            <div class="flex items-center">
+                <i class="fa fa-paper-plane text-primary text-2xl mr-2"></i>
+                <h1 class="text-xl font-bold text-primary">芜湖起飞</h1>
+            </div>
+
+            <!-- 导航菜单 - 桌面版 -->
+            <nav class="hidden md:flex space-x-8">
+                <a href="#flight-booking" class="nav-link text-primary border-b-2 border-primary px-1 py-5 font-medium transition-custom">航班预订</a>
+                <a href="#order-management" class="nav-link text-gray-600 hover:text-primary px-1 py-5 font-medium transition-custom">订单管理</a>
+                <a href="#price-trends" class="nav-link text-gray-600 hover:text-primary px-1 py-5 font-medium transition-custom">价格趋势</a>
+                <a href="#user-center" class="nav-link text-gray-600 hover:text-primary px-1 py-5 font-medium transition-custom">个人中心</a>
+            </nav>
+
+            <!-- 用户菜单 -->
+            <div class="flex items-center space-x-4">
+                <button class="hidden md:block px-4 py-2 text-sm font-medium text-primary border border-primary rounded-full hover:bg-primary/5 transition-custom">
+                    <i class="fa fa-sign-in mr-1"></i> 登录
+                </button>
+                <button class="md:hidden text-gray-600 hover:text-primary">
+                    <i class="fa fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="container mx-auto px-4 py-6">
+    <!-- 航班预订页面 -->
+    <section id="flight-booking" class="page-content">
+        <!-- 搜索区域 -->
+        <div class="bg-white rounded-xl p-6 mb-8 card-shadow">
+            <div class="flex flex-wrap items-center justify-between mb-6">
+                <h2 class="text-[clamp(1.25rem,3vw,1.75rem)] font-bold text-dark">航班查询</h2>
+                <div class="flex border rounded-lg overflow-hidden mt-4 sm:mt-0">
+                    <button class="px-4 py-2 bg-primary text-white font-medium">单程</button>
+                    <button class="px-4 py-2 bg-white text-gray-600 hover:bg-gray-50 transition-custom">往返</button>
+                    <button class="px-4 py-2 bg-white text-gray-600 hover:bg-gray-50 transition-custom">多程</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <!-- 出发地 -->
+                <div class="relative">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">出发城市</label>
+                    <div class="relative">
+                        <i class="fa fa-map-marker absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" placeholder="上海" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-custom">
+                    </div>
+                </div>
+
+                <!-- 目的地 -->
+                <div class="relative">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">到达城市</label>
+                    <div class="relative">
+                        <i class="fa fa-map-marker absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" placeholder="北京" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-custom">
+                    </div>
+                    <button class="absolute top-1/2 -translate-y-1/2 left-full -translate-x-1/2 bg-white p-1 rounded-full border border-gray-300 text-gray-500 hover:text-primary hover:border-primary transition-custom md:block hidden">
+                        <i class="fa fa-exchange"></i>
+                    </button>
+                </div>
+
+                <!-- 日期 -->
+                <div class="relative">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">出发日期</label>
+                    <div class="relative">
+                        <i class="fa fa-calendar absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="date" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-custom">
+                    </div>
+                </div>
+
+                <!-- 乘客人数 -->
+                <div class="relative">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">乘客人数</label>
+                    <div class="relative">
+                        <i class="fa fa-user absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <select class="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg appearance-none focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-custom">
+                            <option>1成人</option>
+                            <option>2成人</option>
+                            <option>3成人</option>
+                            <option>1成人1儿童</option>
+                            <option>1成人1婴儿</option>
+                        </select>
+                        <i class="fa fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <!-- 搜索按钮 -->
+                <div class="flex items-end">
+                    <button class="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 px-6 rounded-lg transition-custom flex items-center justify-center">
+                        <i class="fa fa-search mr-2"></i> 搜索航班
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 筛选区域 -->
+        <div class="bg-white rounded-xl p-4 mb-6 card-shadow">
+            <div class="flex flex-wrap items-center gap-4">
+                <div class="flex items-center">
+                    <span class="text-gray-600 mr-3">航空公司：</span>
+                    <div class="flex flex-wrap gap-2">
+                        <button class="px-3 py-1 text-sm bg-primary/10 text-primary rounded-full">全选</button>
+                        <button class="px-3 py-1 text-sm bg-gray-100 text-gray-600 hover:bg-gray-200 rounded-full transition-custom">东方航空</button>
+                        <button class="px-3 py-1 text-sm bg-gray-100 text-gray-600 hover:bg-gray-200 rounded-full transition-custom">南方航空</button>
+                        <button class="px-3 py-1 text-sm bg-gray-100 text-gray-600 hover:bg-gray-200 rounded-full transition-custom">厦门航空</button>
+                    </div>
+                </div>
+
+                <div class="flex items-center ml-auto">
+                    <span class="text-gray-600 mr-3">排序方式：</span>
+                    <select class="px-3 py-1 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none">
+                        <option>推荐排序</option>
+                        <option>价格从低到高</option>
+                        <option>价格从高到低</option>
+                        <option>飞行时间最短</option>
+                        <option>起飞时间最早</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- 航班列表 -->
+        <div class="space-y-4 mb-8">
+            <!-- 航班1 -->
+            <div class="bg-white rounded-xl overflow-hidden card-shadow transition-custom hover:shadow-lg">
+                <div class="p-5">
+                    <div class="flex flex-wrap">
+                        <!-- 航空公司信息 -->
+                        <div class="w-full md:w-1/5 mb-4 md:mb-0">
+                            <div class="flex items-center">
+                                <img src="https://p11-flow-imagex-download-sign.byteimg.com/tos-cn-i-a9rns2rl98/2d188e29ac544a1cbe2891991ad41fb7.png" alt="厦门航空" class="w-10 h-10 mr-3">
+                                <div>
+                                    <div class="font-medium">厦门航空</div>
+                                    <div class="text-sm text-gray-500">MF4706 波音737(中)</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 时间信息 -->
+                        <div class="w-full md:w-2/5 flex items-center justify-center mb-4 md:mb-0">
+                            <div class="text-center">
+                                <div class="text-2xl font-bold">13:30</div>
+                                <div class="text-sm text-gray-500">上海国际机场</div>
+                            </div>
+
+                            <div class="mx-4 flex-1 max-w-[120px]">
+                                <div class="relative">
+                                    <div class="border-t-2 border-dashed border-gray-300 relative z-0"></div>
+                                    <div class="absolute left-0 top-0 w-full flex justify-between">
+                                        <div class="h-2 w-2 bg-primary rounded-full -mt-1"></div>
+                                        <div class="hidden md:block text-xs text-gray-500">2小时30分钟</div>
+                                        <div class="h-2 w-2 bg-primary rounded-full -mt-1"></div>
+                                    </div>
+                                </div>
+                                <div class="text-center text-xs text-gray-500 mt-1 md:hidden">2小时30分钟</div>
+                            </div>
+
+                            <div class="text-center">
+                                <div class="text-2xl font-bold">16:00</div>
+                                <div class="text-sm text-gray-500">北京大兴国际机场</div>
+                            </div>
+                        </div>
+
+                        <!-- 价格信息 -->
+                        <div class="w-full md:w-1/5 flex flex-col items-center justify-center mb-4 md:mb-0">
+                            <div class="text-2xl font-bold text-danger">¥1200</div>
+                            <div class="text-sm text-gray-500">经济舱</div>
+                        </div>
+
+                        <!-- 剩余票数和操作 -->
+                        <div class="w-full md:w-1/5 flex flex-col items-center justify-center">
+                            <div class="text-sm text-gray-500 mb-2">剩余10张</div>
+                            <button class="px-6 py-2 bg-secondary hover:bg-secondary/90 text-white font-medium rounded-lg transition-custom">
+                                立即预订
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 航班2 -->
+            <div class="bg-white rounded-xl overflow-hidden card-shadow transition-custom hover:shadow-lg">
+                <div class="p-5">
+                    <div class="flex flex-wrap">
+                        <!-- 航空公司信息 -->
+                        <div class="w-full md:w-1/5 mb-4 md:mb-0">
+                            <div class="flex items-center">
+                                <img src="https://p3-flow-imagex-download-sign.byteimg.com/tos-cn-i-a9rns2rl98/fc1c6024763945d086e218e16493aaf5.png" alt="南方航空" class="w-10 h-10 mr-3">
+                                <div>
+                                    <div class="font-medium">南方航空</div>
+                                    <div class="text-sm text-gray-500">CZ2809 空客321(大)</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 时间信息 -->
+                        <div class="w-full md:w-2/5 flex items-center justify-center mb-4 md:mb-0">
+                            <div class="text-center">
+                                <div class="text-2xl font-bold">16:00</div>
+                                <div class="text-sm text-gray-500">上海国际机场</div>
+                            </div>
+
+                            <div class="mx-4 flex-1 max-w-[120px]">
+                                <div class="relative">
+                                    <div class="border-t-2 border-dashed border-gray-300 relative z-0"></div>
+                                    <div class="absolute left-0 top-0 w-full flex justify-between">
+                                        <div class="h-2 w-2 bg-primary rounded-full -mt-1"></div>
+                                        <div class="hidden md:block text-xs text-gray-500">2小时</div>
+                                        <div class="h-2 w-2 bg-primary rounded-full -mt-1"></div>
+                                    </div>
+                                </div>
+                                <div class="text-center text-xs text-gray-500 mt-1 md:hidden">2小时</div>
+                            </div>
+
+                            <div class="text-center">
+                                <div class="text-2xl font-bold">18:30</div>
+                                <div class="text-sm text-gray-500">合肥新桥机场</div>
+                            </div>
+                        </div>
+
+                        <!-- 价格信息 -->
+                        <div class="w-full md:w-1/5 flex flex-col items-center justify-center mb-4 md:mb-0">
+                            <div class="text-2xl font-bold text-danger">¥1200</div>
+                            <div class="text-sm text-gray-500">经济舱</div>
+                        </div>
+
+                        <!-- 剩余票数和操作 -->
+                        <div class="w-full md:w-1/5 flex flex-col items-center justify-center">
+                            <div class="text-sm text-gray-500 mb-2">剩余5张</div>
+                            <button class="px-6 py-2 bg-secondary hover:bg-secondary/90 text-white font-medium rounded-lg transition-custom">
+                                立即预订
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 航班3 -->
+            <div class="bg-white rounded-xl overflow-hidden card-shadow transition-custom hover:shadow-lg">
+                <div class="p-5">
+                    <div class="flex flex-wrap">
+                        <!-- 航空公司信息 -->
+                        <div class="w-full md:w-1/5 mb-4 md:mb-0">
+                            <div class="flex items-center">
+                                <img src="https://p3-flow-imagex-download-sign.byteimg.com/tos-cn-i-a9rns2rl98/b9ce6bc927c24deda30bd826b5134c43.png" alt="上海航空" class="w-10 h-10 mr-3">
+                                <div>
+                                    <div class="font-medium">上海航空</div>
+                                    <div class="text-sm text-gray-500">FM9096 空客320(中)</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 时间信息 -->
+                        <div class="w-full md:w-2/5 flex items-center justify-center mb-4 md:mb-0">
+                            <div class="text-center">
+                                <div class="text-2xl font-bold">13:00</div>
+                                <div class="text-sm text-gray-500">上海国际机场</div>
+                            </div>
+
+                            <div class="mx-4 flex-1 max-w-[120px]">
+                                <div class="relative">
+                                    <div class="border-t-2 border-dashed border-gray-300 relative z-0"></div>
+                                    <div class="absolute left-0 top-0 w-full flex justify-between">
+                                        <div class="h-2 w-2 bg-primary rounded-full -mt-1"></div>
+                                        <div class="hidden md:block text-xs text-gray-500">2小时</div>
+                                        <div class="h-2 w-2 bg-primary rounded-full -mt-1"></div>
+                                    </div>
+                                </div>
+                                <div class="text-center text-xs text-gray-500 mt-1 md:hidden">2小时</div>
+                            </div>
+
+                            <div class="text-center">
+                                <div class="text-2xl font-bold">15:00</div>
+                                <div class="text-sm text-gray-500">合肥新桥机场</div>
+                            </div>
+                        </div>
+
+                        <!-- 价格信息 -->
+                        <div class="w-full md:w-1/5 flex flex-col items-center justify-center mb-4 md:mb-0">
+                            <div class="text-2xl font-bold text-danger">¥1000</div>
+                            <div class="text-sm text-gray-500">经济舱</div>
+                        </div>
+
+                        <!-- 剩余票数和操作 -->
+                        <div class="w-full md:w-1/5 flex flex-col items-center justify-center">
+                            <div class="text-sm text-gray-500 mb-2">剩余3张</div>
+                            <button class="px-6 py-2 bg-secondary hover:bg-secondary/90 text-white font-medium rounded-lg transition-custom">
+                                立即预订
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 分页 -->
+        <div class="flex justify-center mt-8">
+            <div class="flex items-center space-x-1">
+                <button class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    <i class="fa fa-chevron-left"></i>
+                </button>
+                <button class="w-10 h-10 flex items-center justify-center rounded-lg bg-primary text-white">1</button>
+                <button class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50">2</button>
+                <button class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50">3</button>
+                <button class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50">
+                    <i class="fa fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- 订单管理页面 (默认隐藏) -->
+    <section id="order-management" class="page-content hidden">
+        <div class="bg-white rounded-xl p-6 mb-8 card-shadow">
+            <h2 class="text-[clamp(1.25rem,3vw,1.75rem)] font-bold text-dark mb-6">我的订单</h2>
+
+            <div class="flex flex-wrap gap-4 mb-6">
+                <button class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium">全部订单</button>
+                <button class="px-4 py-2 bg-gray-100 text-gray-600 hover:bg-gray-200 rounded-lg text-sm font-medium transition-custom">待支付</button>
+                <button class="px-4 py-2 bg-gray-100 text-gray-600 hover:bg-gray-200 rounded-lg text-sm font-medium transition-custom">已支付</button>
+                <button class="px-4 py-2 bg-gray-100 text-gray-600 hover:bg-gray-200 rounded-lg text-sm font-medium transition-custom">已完成</button>
+                <button class="px-4 py-2 bg-gray-100 text-gray-600 hover:bg-gray-200 rounded-lg text-sm font-medium transition-custom">已取消</button>
+            </div>
+
+            <div class="relative">
+                <i class="fa fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="text" placeholder="请输入订单号或航班号查询" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-custom">
+            </div>
+        </div>
+
+        <!-- 订单列表 -->
+        <div class="space-y-6 mb-8">
+            <!-- 订单1 -->
+            <div class="bg-white rounded-xl overflow-hidden card-shadow">
+                <div class="p-5 border-b border-gray-100">
+                    <div class="flex flex-wrap justify-between items-center">
+                        <div>
+                            <span class="text-sm font-medium">订单号：</span>
+                            <span class="text-sm text-gray-600">OD20230615876234</span>
+                        </div>
+                        <div class="mt-2 sm:mt-0">
+                            <span class="inline-block px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full">待支付</span>
+                            <span class="text-sm text-gray-500 ml-3">2023-06-15 10:23</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-5">
+                    <div class="flex flex-wrap">
+                        <!-- 航班信息 -->
+                        <div class="w-full md:w-3/4">
+                            <div class="flex flex-wrap items-center mb-4">
+                                <img src="https://p3-flow-imagex-download-sign.byteimg.com/tos-cn-i-a9rns2rl98/d79ab50b158a4c43800b49285edf13ba.png" alt="吉祥航空" class="w-8 h-8 mr-3">
+                                <div>
+                                    <div class="font-medium">吉祥航空 HO1196</div>
+                                    <div class="text-sm text-gray-500">波音737(中)</div>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-wrap items-center">
+                                <div class="text-2xl font-bold mr-6">10:30</div>
+                                <div class="text-gray-500 mr-6">青岛国际机场</div>
+
+                                <div class="flex-1 max-w-[120px] mx-4">
+                                    <div class="relative">
+                                        <div class="border-t-2 border-dashed border-gray-300 relative z-0"></div>
+                                        <div class="absolute left-0 top-0 w-full flex justify-between">
+                                            <div class="h-2 w-2 bg-primary rounded-full -mt-1"></div>
+                                            <div class="hidden md:block text-xs text-gray-500">2小时30分钟</div>
+                                            <div class="h-2 w-2 bg-primary rounded-full -mt-1"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="text-2xl font-bold mr-6">13:00</div>
+                                <div class="text-gray-500">上海国际机场</div>
+                            </div>
+
+                            <div class="mt-4">
+                                <div class="text-sm text-gray-600">
+                                    <span class="mr-4"><span class="text-gray-500">乘客：</span>张三</span>
+                                    <span class="mr-4"><span class="text-gray-500">舱位：</span>经济舱</span>
+                                    <span><span class="text-gray-500">座位：</span>随机分配</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 价格和操作 -->
+                        <div class="w-full md:w-1/4 mt-6 md:mt-0 flex flex-col items-end">
+                            <div class="text-right mb-4">
+                                <div class="text-sm text-gray-500">总价</div>
+                                <div class="text-2xl font-bold text-danger">¥1300</div>
+                            </div>
+
+                            <div class="flex space-x-3">
+                                <button class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-custom">
+                                    查看详情
+                                </button>
+                                <button class="px-4 py-2 bg-danger hover:bg-danger/90 text-white rounded-lg text-sm font-medium transition-custom">
+                                    取消订单
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 订单2 -->
+            <div class="bg-white rounded-xl overflow-hidden card-shadow">
+                <div class="p-5 border-b border-gray-100">
+                    <div class="flex flex-wrap justify-between items-center">
+                        <div>
+                            <span class="text-sm font-medium">订单号：</span>
+                            <span class="text-sm text-gray-600">OD20230614765421</span>
+                        </div>
+                        <div class="mt-2 sm:mt-0">
+                            <span class="inline-block px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">已支付</span>
+                            <span class="text-sm text-gray-500 ml-3">2023-06-14 15:46</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-5">
+                    <div class="flex flex-wrap">
+                        <!-- 航班信息 -->
+                        <div class="w-full md:w-3/4">
+                            <div class="flex flex-wrap items-center mb-4">
+                                <img src="https://p3-flow-imagex-download-sign.byteimg.com/tos-cn-i-a9rns2rl98/aa663e6818d846f0a1bc9c0ac0bbc3f9.png" alt="东方航空" class="w-8 h-8 mr-3">
+                                <div>
+                                    <div class="font-medium">东方航空 MU6639</div>
+                                    <div class="text-sm text-gray-500">波音737(中)</div>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-wrap items-center">
+                                <div class="text-2xl font-bold mr-6">13:00</div>
+                                <div class="text-gray-500 mr-6">大连国际机场</div>
+
+                                <div class="flex-1 max-w-[120px] mx-4">
+                                    <div class="relative">
+                                        <div class="border-t-2 border-dashed border-gray-300 relative z-0"></div>
+                                        <div class="absolute left-0 top-0 w-full flex justify-between">
+                                            <div class="h-2 w-2 bg-primary rounded-full -mt-1"></div>
+                                            <div class="hidden md:block text-xs text-gray-500">2小时</div>
+                                            <div class="h-2 w-2 bg-primary rounded-full -mt-1"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="text-2xl font-bold mr-6">15:00</div>
+                                <div class="text-gray-500">上海浦东机场</div>
+                            </div>
+
+                            <div class="mt-4">
+                                <div class="text-sm text-gray-600">
+                                    <span class="mr-4"><span class="text-gray-500">乘客：</span>李四</span>
+                                    <span class="mr-4"><span class="text-gray-500">舱位：</span>经济舱</span>
+                                    <span><span class="text-gray-500">座位：</span>12A</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 价格和操作 -->
+                        <div class="w-full md:w-1/4 mt-6 md:mt-0 flex flex-col items-end">
+                            <div class="text-right mb-4">
+                                <div class="text-sm text-gray-500">总价</div>
+                                <div class="text-2xl font-bold text-danger">¥1400</div>
+                            </div>
+
+                            <div class="flex space-x-3">
+                                <button class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-custom">
+                                    查看详情
+                                </button>
+                                <button class="px-4 py-2 bg-danger hover:bg-danger/90 text-white rounded-lg text-sm font-medium transition-custom">
+                                    取消订单
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 分页 -->
+        <div class="flex justify-center mt-8">
+            <div class="flex items-center space-x-1">
+                <button class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    <i class="fa fa-chevron-left"></i>
+                </button>
+                <button class="w-10 h-10 flex items-center justify-center rounded-lg bg-primary text-white">1</button>
+                <button class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50">2</button>
+                <button class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50">
+                    <i class="fa fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- 价格趋势页面 (默认隐藏) -->
+    <section id="price-trends" class="page-content hidden">
+        <div class="bg-white rounded-xl p-6 mb-8 card-shadow">
+            <h2 class="text-[clamp(1.25rem,3vw,1.75rem)] font-bold text-dark mb-6">价格趋势</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="relative">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">出发城市</label>
+                    <div class="relative">
+                        <i class="fa fa-map-marker absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" placeholder="上海" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-custom">
+                    </div>
+                </div>
+
+                <div class="relative">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">到达城市</label>
+                    <div class="relative">
+                        <i class="fa fa-map-marker absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" placeholder="北京" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-custom">
+                    </div>
+                </div>
+
+                <div class="flex items-end">
+                    <button class="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 px-6 rounded-lg transition-custom flex items-center justify-center">
+                        <i class="fa fa-line-chart mr-2"></i> 查看趋势
+                    </button>
+                </div>
+            </div>
+
+            <div class="h-80">
+                <canvas id="priceChart"></canvas>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white rounded-xl p-6 card-shadow">
+                <h3 class="text-lg font-bold mb-4">热门目的地</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <span class="w-6 h-6 flex items-center justify-center bg-primary/10 text-primary rounded-full text-sm font-medium mr-3">1</span>
+                            <span>北京</span>
+                        </div>
+                        <span class="text-sm text-gray-500">¥1200 起</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <span class="w-6 h-6 flex items-center justify-center bg-primary/10 text-primary rounded-full text-sm font-medium mr-3">2</span>
+                            <span>上海</span>
+                        </div>
+                        <span class="text-sm text-gray-500">¥1000 起</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <span class="w-6 h-6 flex items-center justify-center bg-primary/10 text-primary rounded-full text-sm font-medium mr-3">3</span>
+                            <span>广州</span>
+                        </div>
+                        <span class="text-sm text-gray-500">¥1300 起</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <span class="w-6 h-6 flex items-center justify-center bg-gray-100 text-gray-600 rounded-full text-sm font-medium mr-3">4</span>
+                            <span>深圳</span>
+                        </div>
+                        <span class="text-sm text-gray-500">¥1100 起</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <span class="w-6 h-6 flex items-center justify-center bg-gray-100 text-gray-600 rounded-full text-sm font-medium mr-3">5</span>
+                            <span>成都</span>
+                        </div>
+                        <span class="text-sm text-gray-500">¥900 起</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl p-6 card-shadow">
+                <h3 class="text-lg font-bold mb-4">特价机票</h3>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center p-3 border border-gray-100 rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-custom">
+                        <div>
+                            <div class="font-medium">上海 → 北京</div>
+                            <div class="text-sm text-gray-500">6月20日 南方航空</div>
+                        </div>
+                        <div class="text-danger font-bold">¥899</div>
+                    </div>
+                    <div class="flex justify-between items-center p-3 border border-gray-100 rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-custom">
+                        <div>
+                            <div class="font-medium">广州 → 上海</div>
+                            <div class="text-sm text-gray-500">6月22日 东方航空</div>
+                        </div>
+                        <div class="text-danger font-bold">¥799</div>
+                    </div>
+                    <div class="flex justify-between items-center p-3 border border-gray-100 rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-custom">
+                        <div>
+                            <div class="font-medium">北京 → 成都</div>
+                            <div class="text-sm text-gray-500">6月25日 四川航空</div>
+                        </div>
+                        <div class="text-danger font-bold">¥699</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 个人中心页面 (默认隐藏) -->
+    <section id="user-center" class="page-content hidden">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <!-- 侧边栏 -->
+            <div class="md:col-span-1">
+                <div class="bg-white rounded-xl overflow-hidden card-shadow">
+                    <div class="bg-primary p-6 text-center text-white">
+                        <div class="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-3">
+                            <i class="fa fa-user text-2xl"></i>
+                        </div>
+                        <h3 class="font-medium">游客用户</h3>
+                        <p class="text-sm text-white/80 mt-1">未登录，登录后可查看更多内容</p>
+                    </div>
+
+                    <div class="p-4">
+                        <ul class="space-y-1">
+                            <li>
+                                <a href="#" class="flex items-center px-4 py-3 text-primary bg-primary/5 rounded-lg">
+                                    <i class="fa fa-user-circle w-6"></i>
+                                    <span class="ml-3">个人信息</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#order-management" class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-custom">
+                                    <i class="fa fa-list-alt w-6"></i>
+                                    <span class="ml-3">我的订单</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-custom">
+                                    <i class="fa fa-heart w-6"></i>
+                                    <span class="ml-3">我的收藏</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-custom">
+                                    <i class="fa fa-cog w-6"></i>
+                                    <span class="ml-3">账户设置</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-custom">
+                                    <i class="fa fa-question-circle w-6"></i>
+                                    <span class="ml-3">帮助中心</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 主内容 -->
+            <div class="md:col-span-3">
+                <div class="bg-white rounded-xl p-6 mb-6 card-shadow">
+                    <h2 class="text-xl font-bold mb-6">个人信息</h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">姓名</label>
+                            <input type="text" placeholder="请登录后查看" disabled class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">手机号码</label>
+                            <input type="text" placeholder="请登录后查看" disabled class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">身份证号</label>
+                            <input type="text" placeholder="请登录后查看" disabled class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">邮箱</label>
+                            <input type="text" placeholder="请登录后查看" disabled class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
+                        </div>
+                    </div>
+
+                    <div class="mt-6">
+                        <button class="px-6 py-2 bg-primary hover:bg-primary/90 text-white font-medium rounded-lg transition-custom">
+                            <i class="fa fa-sign-in mr-1"></i> 登录账号
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl p-6 card-shadow">
+                    <h2 class="text-xl font-bold mb-6">近期订单统计</h2>
+
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <div class="p-4 border border-gray-100 rounded-lg text-center">
+                            <div class="text-2xl font-bold text-primary mb-1">0</div>
+                            <div class="text-sm text-gray-500">待支付</div>
+                        </div>
+                        <div class="p-4 border border-gray-100 rounded-lg text-center">
+                            <div class="text-2xl font-bold text-blue-500 mb-1">0</div>
+                            <div class="text-sm text-gray-500">已支付</div>
+                        </div>
+                        <div class="p-4 border border-gray-100 rounded-lg text-center">
+                            <div class="text-2xl font-bold text-green-500 mb-1">0</div>
+                            <div class="text-sm text-gray-500">已完成</div>
+                        </div>
+                        <div class="p-4 border border-gray-100 rounded-lg text-center">
+                            <div class="text-2xl font-bold text-gray-500 mb-1">0</div>
+                            <div class="text-sm text-gray-500">已取消</div>
+                        </div>
+                    </div>
+
+                    <div class="h-64">
+                        <canvas id="orderChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer class="bg-dark text-white mt-12">
+    <div class="container mx-auto px-4 py-10">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+                <div class="flex items-center mb-4">
+                    <i class="fa fa-paper-plane text-primary text-2xl mr-2"></i>
+                    <h2 class="text-xl font-bold">芜湖起飞</h2>
+                </div>
+                <p class="text-gray-400 text-sm">提供便捷、优惠的机票预订服务，让您的出行更加舒适愉快。</p>
+                <div class="flex space-x-4 mt-4">
+                    <a href="#" class="text-gray-400 hover:text-white transition-custom"><i class="fa fa-weibo"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white transition-custom"><i class="fa fa-wechat"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white transition-custom"><i class="fa fa-qq"></i></a>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-lg font-medium mb-4">快速链接</h3>
+                <ul class="space-y-2 text-gray-400">
+                    <li><a href="#flight-booking" class="hover:text-white transition-custom">机票预订</a></li>
+                    <li><a href="#order-management" class="hover:text-white transition-custom">订单管理</a></li>
+                    <li><a href="#price-trends" class="hover:text-white transition-custom">价格趋势</a></li>
+                    <li><a href="#" class="hover:text-white transition-custom">常见问题</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h3 class="text-lg font-medium mb-4">联系我们</h3>
+                <ul class="space-y-2 text-gray-400">
+                    <li class="flex items-center"><i class="fa fa-phone w-5 mr-2"></i> 400-123-4567</li>
+                    <li class="flex items-center"><i class="fa fa-envelope w-5 mr-2"></i> support@wuhu.com</li>
+                    <li class="flex items-center"><i class="fa fa-map-marker w-5 mr-2"></i> 上海市浦东新区XX大厦</li>
+                </ul>
+            </div>
+
+            <div>
+                <h3 class="text-lg font-medium mb-4">支付方式</h3>
+                <div class="flex flex-wrap gap-2">
+                    <span class="px-3 py-1 bg-gray-800 rounded text-sm">微信支付</span>
+                    <span class="px-3 py-1 bg-gray-800 rounded text-sm">支付宝</span>
+                    <span class="px-3 py-1 bg-gray-800 rounded text-sm">银行卡</span>
+                    <span class="px-3 py-1 bg-gray-800 rounded text-sm">信用卡</span>
+                </div>
+                <p class="text-gray-400 text-sm mt-4">© 2023 芜湖起飞. 保留所有权利</p>
+            </div>
+        </div>
+    </div>
+    </div>
+</footer>
+
+<!-- 座位选择弹窗 (默认隐藏) -->
+<div id="seat-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl w-full max-w-3xl max-h-[90vh] overflow-auto">
+        <div class="p-6 border-b border-gray-100">
+            <div class="flex justify-between items-center">
+                <h3 class="text-xl font-bold">选择座位 - 厦门航空 MF4706</h3>
+                <button id="close-seat-modal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <p class="text-gray-500 mt-1">2023-06-15 13:30 上海国际机场 → 北京大兴国际机场</p>
+        </div>
+
+        <div class="p-6">
+            <!-- 座位布局 -->
+            <div class="text-center mb-8">
+                <div class="inline-block px-16 py-3 bg-gray-100 rounded-lg text-sm mb-8">
+                    机舱前部
+                </div>
+
+                <!-- 座位网格 -->
+                <div class="grid grid-cols-6 gap-2 max-w-md mx-auto mb-6">
+                    <!-- 第1排 -->
+                    <div class="seat-item h-10 rounded bg-green-100 text-green-800 flex items-center justify-center cursor-pointer hover:bg-green-200 transition-custom" data-seat="1A">1A</div>
+                    <div class="seat-item h-10 rounded bg-green-100 text-green-800 flex items-center justify-center cursor-pointer hover:bg-green-200 transition-custom" data-seat="1B">1B</div>
+                    <div class="seat-item h-10 rounded bg-green-100 text-green-800 flex items-center justify-center cursor-pointer hover:bg-green-200 transition-custom" data-seat="1C">1C</div>
+                    <div class="seat-item h-10 rounded bg-gray-200 text-gray-500 flex items-center justify-center cursor-not-allowed" data-seat="1D">1D</div>
+                    <div class="seat-item h-10 rounded bg-gray-200 text-gray-500 flex items-center justify-center cursor-not-allowed" data-seat="1E">1E</div>
+                    <div class="seat-item h-10 rounded bg-green-100 text-green-800 flex items-center justify-center cursor-pointer hover:bg-green-200 transition-custom" data-seat="1F">1F</div>
+
+                    <!-- 第2排 -->
+                    <div class="seat-item h-10 rounded bg-red-100 text-red-800 flex items-center justify-center cursor-not-allowed" data-seat="2A">2A</div>
+                    <div class="seat-item h-10 rounded bg-red-100 text-red-800 flex items-center justify-center cursor-not-allowed" data-seat="2B">2B</div>
+                    <div class="seat-item h-10 rounded bg-green-100 text-green-800 flex items-center justify-center cursor-pointer hover:bg-green-200 transition-custom" data-seat="2C">2C</div>
+                    <div class="seat-item h-10 rounded bg-green-100 text-green-800 flex items-center justify-center cursor-pointer hover:bg-green-200 transition-custom" data-seat="2D">2D</div>
+                    <div class="seat-item h-10 rounded bg-red-100 text-red-800 flex items-center justify-center cursor-not-allowed" data-seat="2E">2E</div>
+                    <div class="seat-item h-10 rounded bg-red-100 text-red-800 flex items-center justify-center cursor-not-allowed" data-seat="2F">2F</div>
+
+                    <!-- 第3排 -->
+                    <div class="seat-item h-10 rounded bg-green-100 text-green-800 flex items-center justify-center cursor-pointer hover:bg-green-200 transition-custom" data-seat="3A">3A</div>
+                    <div class="seat-item h-10 rounded bg-green-100 text-green-800 flex items-center justify-center cursor-pointer hover:bg-green-200 transition-custom" data-seat="3B">3B</div>
+                    <div class="seat-item h-10 rounded bg-green-100 text-green-800 flex items-center justify-center cursor-pointer hover:bg-green-200 transition-custom" data-seat="3C">3C</div>
+                    <div class="seat-item h-10 rounded bg-red-100 text-red-800 flex items-center justify-center cursor-not-allowed" data-seat="3D">3D</div>
+                    <div class="seat-item h-10 rounded bg-green-100 text-green-800 flex items-center justify-center cursor-pointer hover:bg-green-200 transition-custom" data-seat="3E">3E</div>
+                    <div class="seat-item h-10 rounded bg-green-100 text-green-800 flex items-center justify-center cursor-pointer hover:bg-green-200 transition-custom" data-seat="3F">3F</div>
+                </div>
+
+                <!-- 座位图例 -->
+                <div class="flex flex-wrap justify-center gap-6 text-sm">
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 rounded bg-green-100 mr-2"></div>
+                        <span>可选座位</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 rounded bg-red-100 mr-2"></div>
+                        <span>已售座位</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 rounded bg-blue-100 mr-2"></div>
+                        <span>已选座位</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 rounded bg-gray-200 mr-2"></div>
+                        <span>不可选座位</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 已选座位 -->
+            <div class="border-t border-gray-100 pt-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h4 class="font-medium">已选座位：</h4>
+                    <span id="selected-seats" class="text-gray-600">无</span>
+                </div>
+
+                <button id="confirm-seat" class="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 rounded-lg transition-custom disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    确认选择
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 乘客信息表单弹窗 (默认隐藏) -->
+<div id="passenger-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] overflow-auto">
+        <div class="p-6 border-b border-gray-100">
+            <div class="flex justify-between items-center">
+                <h3 class="text-xl font-bold">填写乘客信息</h3>
+                <button id="close-passenger-modal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="p-6">
+            <!-- 乘客1信息 -->
+            <div class="mb-6 p-4 border border-gray-100 rounded-lg">
+                <h4 class="font-medium mb-4">乘客 1</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">姓名</label>
+                        <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-custom">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">证件类型</label>
+                        <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-custom">
+                            <option>居民身份证</option>
+                            <option>护照</option>
+                            <option>港澳通行证</option>
+                            <option>台湾通行证</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">证件号码</label>
+                        <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-custom">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 联系人信息 -->
+            <div class="mb-6">
+                <h4 class="font-medium mb-4">联系人信息</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">手机号码</label>
+                        <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-custom">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">电子邮箱（选填）</label>
+                        <input type="email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-custom">
+                    </div>
+                </div>
+            </div>
+
+            <button id="submit-order" class="w-full bg-secondary hover:bg-secondary/90 text-white font-medium py-3 rounded-lg transition-custom">
+                提交订单
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 订单提交成功弹窗 (默认隐藏) -->
+<div id="success-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl w-full max-w-md p-6 text-center">
+        <div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+            <i class="fa fa-check text-2xl text-green-500"></i>
+        </div>
+        <h3 class="text-xl font-bold mb-2">订单提交成功！</h3>
+        <p class="text-gray-600 mb-6">您的订单号：<span class="font-medium">OD20230615876234</span></p>
+        <p class="text-gray-500 text-sm mb-6">座位已为您锁定15分钟，请尽快完成支付</p>
+        <div class="flex space-x-3">
+            <button id="view-order" class="flex-1 px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg transition-custom">
+                查看订单
+            </button>
+            <button id="close-success-modal" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-custom">
+                关闭
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 页面导航切换
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            // 隐藏所有页面
+            document.querySelectorAll('.page-content').forEach(page => {
+                page.classList.add('hidden');
+            });
+
+            // 显示目标页面
+            const targetId = this.getAttribute('href').substring(1);
+            document.getElementById(targetId).classList.remove('hidden');
+
+            // 更新导航样式
+            document.querySelectorAll('.nav-link').forEach(item => {
+                item.classList.remove('text-primary', 'border-b-2', 'border-primary');
+                item.classList.add('text-gray-600');
+            });
+            this.classList.remove('text-gray-600');
+            this.classList.add('text-primary', 'border-b-2', 'border-primary');
+        });
+    });
+
+    // 座位选择逻辑
+    const seatModal = document.getElementById('seat-modal');
+    const closeSeatModal = document.getElementById('close-seat-modal');
+    const confirmSeatBtn = document.getElementById('confirm-seat');
+    const selectedSeatsEl = document.getElementById('selected-seats');
+    const passengerModal = document.getElementById('passenger-modal');
+    const closePassengerModal = document.getElementById('close-passenger-modal');
+    const submitOrderBtn = document.getElementById('submit-order');
+    const successModal = document.getElementById('success-modal');
+    const viewOrderBtn = document.getElementById('view-order');
+    const closeSuccessModal = document.getElementById('close-success-modal');
+
+    let selectedSeats = [];
+
+    // 打开座位选择弹窗
+    document.querySelectorAll('.flight-item .btn-book').forEach(btn => {
+        btn.addEventListener('click', function() {
+            seatModal.classList.remove('hidden');
+        });
+    });
+
+    // 关闭座位选择弹窗
+    closeSeatModal.addEventListener('click', function() {
+        seatModal.classList.add('hidden');
+    });
+
+    // 选择座位
+    document.querySelectorAll('.seat-item').forEach(seat => {
+        if (seat.classList.contains('bg-green-100')) { // 只处理可选座位
+            seat.addEventListener('click', function() {
+                const seatNumber = this.getAttribute('data-seat');
+
+                if (this.classList.contains('bg-blue-100')) {
+                    // 取消选择
+                    this.classList.remove('bg-blue-100', 'text-blue-800');
+                    this.classList.add('bg-green-100', 'text-green-800');
+                    selectedSeats = selectedSeats.filter(s => s !== seatNumber);
+                } else {
+                    // 选中座位
+                    this.classList.remove('bg-green-100', 'text-green-800');
+                    this.classList.add('bg-blue-100', 'text-blue-800');
+                    selectedSeats.push(seatNumber);
+                }
+
+                // 更新已选座位显示
+                if (selectedSeats.length > 0) {
+                    selectedSeatsEl.textContent = selectedSeats.join(', ');
+                    confirmSeatBtn.removeAttribute('disabled');
+                } else {
+                    selectedSeatsEl.textContent = '无';
+                    confirmSeatBtn.setAttribute('disabled', 'disabled');
+                }
+            });
+        }
+    });
+
+    // 确认选择座位，打开乘客信息表单
+    confirmSeatBtn.addEventListener('click', function() {
+        seatModal.classList.add('hidden');
+        passengerModal.classList.remove('hidden');
+    });
+
+    // 关闭乘客信息表单
+    closePassengerModal.addEventListener('click', function() {
+        passengerModal.classList.add('hidden');
+    });
+
+    // 提交订单
+    submitOrderBtn.addEventListener('click', function() {
+        passengerModal.classList.add('hidden');
+        successModal.classList.remove('hidden');
+    });
+
+    // 查看订单
+    viewOrderBtn.addEventListener('click', function() {
+        successModal.classList.add('hidden');
+        // 切换到订单管理页面
+        document.querySelectorAll('.nav-link')[1].click();
+    });
+
+    // 关闭成功弹窗
+    closeSuccessModal.addEventListener('click', function() {
+        successModal.classList.add('hidden');
+    });
+
+    // 取消订单
+    document.querySelectorAll('.btn-cancel-order').forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (confirm('确定要取消该订单吗？')) {
+                // 模拟取消订单
+                const orderEl = this.closest('.order-item');
+                const statusEl = orderEl.querySelector('.order-status');
+                statusEl.className = 'order-status inline-block px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full';
+                statusEl.textContent = '已取消';
+                this.disabled = true;
+                this.textContent = '已取消';
+                this.className = 'btn-cancel-order px-4 py-2 bg-gray-200 text-gray-500 rounded-lg text-sm font-medium cursor-not-allowed';
+            }
+        });
+    });
+
+    // 初始化价格趋势图表
+    const initPriceChart = () => {
+        const ctx = document.getElementById('priceChart');
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['6/15', '6/16', '6/17', '6/18', '6/19', '6/20', '6/21'],
+                    datasets: [{
+                        label: '经济舱价格',
+                        data: [1200, 1300, 1100, 1400, 1350, 1250, 1150],
+                        borderColor: '#1E88E5',
+                        backgroundColor: 'rgba(30, 136, 229, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            title: {
+                                display: true,
+                                text: '价格 (¥)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    };
+
+    // 初始化订单统计图表
+    const initOrderChart = () => {
+        const ctx = document.getElementById('orderChart');
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['待支付', '已支付', '已完成', '已取消'],
+                    datasets: [{
+                        data: [0, 0, 0, 0],
+                        backgroundColor: [
+                            '#1E88E5',
+                            '#3B82F6',
+                            '#4CAF50',
+                            '#9CA3AF'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+    };
+
+    // 页面加载完成后初始化图表
+    window.addEventListener('load', function() {
+        initPriceChart();
+        initOrderChart();
+    });
+</script>
+</body>
+</html>
