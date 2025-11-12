@@ -134,14 +134,15 @@ public class BookingService {
                 return buildCompleteBookingResponse(existingBooking, flightInstance);
             }
 
-            // Step 4: 锁定座位
-            selectedSeats = lockSeats(request.getInstanceId(), request.getSeatNumbers());
 
             // Step 5: 保存乘客信息
             passengers = savePassengers(request.getPassengers());
 
             // Step 6: 生成订单号
             bookingId = generateBookingId();
+
+            // Step 4: 锁定座位
+            selectedSeats = lockSeats(request.getInstanceId(), request.getSeatNumbers(), bookingId);
 
             // Step 7: 计算价格
             BigDecimal totalPrice = flightInstance.getPrice().multiply(new BigDecimal(passengers.size()));
@@ -259,7 +260,7 @@ public class BookingService {
     /**
      * 锁定座位
      */
-    private List<Seat> lockSeats(String instanceId, List<String> seatNumbers) {
+    private List<Seat> lockSeats(String instanceId, List<String> seatNumbers, String bookingId) {
         log.debug("开始锁定座位，instanceId={}, seatNumbers={}", instanceId, seatNumbers);
 
         // 查询座位
@@ -281,12 +282,11 @@ public class BookingService {
         }
 
         // 锁定座位（15分钟）
-        // todo 这里可以
+        // todo 改为已售状态
         List<Long> seatIds = seats.stream().map(Seat::getSeatId).collect(Collectors.toList());
-        String tempBookingId = "TEMP_" + System.currentTimeMillis();
         LocalDateTime lockExpireAt = LocalDateTime.now().plusMinutes(HOLD_EXPIRE_MINUTES);
 
-        int locked = seatMapper.lockSeats(seatIds, tempBookingId, lockExpireAt);
+        int locked = seatMapper.lockSeats(seatIds, bookingId, lockExpireAt);
 
         if (locked != seatIds.size()) {
             throw new BusinessException("座位锁定失败，请重新选择");

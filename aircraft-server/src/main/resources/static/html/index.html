@@ -1143,5 +1143,410 @@
     document.getElementById('flight-date').value = today;
   });
 </script>
+<script>
+  /* ===== 全局状态 ===== */
+  let selectedFlight = null;
+  let selectedSeats = [];
+  let flights = [];
+
+  /* ===== 步骤切换（若你已有自定义方式，可改内部实现） ===== */
+  function goToStep(step) {
+    const sections = ["section1","section2","section3","section4"];
+    sections.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.style.display = (id === "section"+step) ? "" : "none";
+      el.classList.toggle("active", id === "section"+step);
+    });
+
+    if (step === 2 && selectedFlight) {
+      loadSeatMap(selectedFlight.instanceId);
+      displayFlightDetails(selectedFlight);
+    }
+    if (step === 3) {
+      generatePassengerForms();
+    }
+  }
+
+  /* ===== 查询航班 ===== */
+  function searchFlights() {
+    const departCity = document.getElementById('departCity').value;
+    const arrivalCity = document.getElementById('arrivalCity').value;
+    const flightDate = document.getElementById('flightDate').value;
+    const passengerCount = document.getElementById('passengerCount').value;
+    const sortType = document.getElementById('sortType').value;
+
+    if (!departCity || !arrivalCity || !flightDate) {
+      alert('请填写查询条件');
+      return;
+    }
+
+    const body = {
+      departCity,
+      arrivalCity,
+      flightDate,
+      passengerCount: parseInt(passengerCount),
+      sortType
+    };
+
+    fetch('/api/flights/search', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(body)
+    })
+            .then(r => {
+              if (!r.ok) throw new Error('查询航班失败');
+              return r.json();
+            })
+            .then(data => {
+              flights = data;
+              displayFlights(data);
+              const btn = document.getElementById('selectFlightBtn');
+              if (btn) btn.style.display = data.length > 0 ? '' : 'none';
+            })
+            .catch(e => {
+              console.error(e);
+              alert(e.message);
+            });
+  }
+
+  /* ===== 显示航班列表 ===== */
+  function displayFlights(list) {
+    const wrap = document.getElementById('flightList');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+    if (!list || list.length === 0) {
+      wrap.innerHTML = '<p>无航班</p>';
+      return;
+    }
+    list.forEach(f => {
+      const div = document.createElement('div');
+      div.className = 'flight-card'; /* 复用你原来的样式类，如不同请改 */
+      div.onclick = () => selectFlight(f, div);
+
+      const departTime = new Date(f.departDatetime).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+      const arrivalTime = new Date(f.arrivalDatetime).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+      const durationMs = new Date(f.arrivalDatetime) - new Date(f.departDatetime);
+      const hours = Math.floor(durationMs / 3600000);
+      const mins = Math.floor((durationMs % 3600000) / 60000);
+
+      div.innerHTML = `
+      <div class="flight-info">
+        <div><strong>${f.flightNumber}</strong> ${f.airlineName||''}</div>
+        <div class="price">¥${f.price}</div>
+      </div>
+      <div style="display:flex;align-items:center;">
+        <div class="time-info">
+          <div class="time">${departTime}</div>
+          <div class="airport">${f.departAirport} ${f.departAirportName||''}</div>
+        </div>
+        <div style="flex-grow:1;text-align:center;">
+          <div class="duration">${hours}小时${mins}分钟</div>
+          <div>直飞</div>
+        </div>
+        <div class="time-info">
+          <div class="time">${arrivalTime}</div>
+          <div class="airport">${f.arrivalAirport} ${f.arrivalAirportName||''}</div>
+        </div>
+      </div>
+      <div style="margin-top:8px;">剩余座位: ${f.availableSeats} | 机型: ${f.aircraftCode||''}</div>
+    `;
+      wrap.appendChild(div);
+    });
+  }
+
+  /* ===== 选择航班 ===== */
+  function selectFlight(flight, el) {
+    selectedFlight = flight;
+    document.querySelectorAll('#flightList .flight-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    const btn = document.getElementById('selectFlightBtn');
+    if (btn) btn.style.display = '';
+  }
+
+  /* ===== 航班详情 ===== */
+  function displayFlightDetails(flight) {
+    const box = document.getElementById('flightDetails');
+    if (!box) return;
+    box.innerHTML = `
+    <h3>${flight.flightNumber} ${flight.airlineName||''}</h3>
+    <p>出发: ${flight.departAirport} ${flight.departAirportName||''} ${new Date(flight.departDatetime).toLocaleString()}</p>
+    <p>到达: ${flight.arrivalAirport} ${flight.arrivalAirportName||''} ${new Date(flight.arrivalDatetime).toLocaleString()}</p>
+    <p>价格: ¥${flight.price} /人 | 剩余座位: ${flight.availableSeats}</p>
+  `;
+  }
+
+  /* ===== 座位图加载 ===== */
+  function loadSeatMap(instanceId) {
+    fetch(`/api/bookings/seat-map/${instanceId}`)
+            .then(r => {
+              if (!r.ok) throw new Error('获取座位图失败');
+              return r.json();
+            })
+            .then(data => displaySeatMap(data))
+            .catch(e => alert(e.message));
+  }
+
+  /* ===== 显示座位图 ===== */
+  function displaySeatMap(data) {
+    const seatMapEl = document.getElementById('seatMap');
+    if (!seatMapEl) return;
+    seatMapEl.innerHTML = '';
+    selectedSeats = [];
+    updateSelectedSeatsText();
+
+    const passengerCount = parseInt(document.getElementById('passengerCount').value);
+
+    data.seats.sort((a,b)=>{
+      if (a.rowNumber !== b.rowNumber) return a.rowNumber - b.rowNumber;
+      return a.seatNumber.localeCompare(b.seatNumber);
+    });
+
+    let currentRow = null, seatsContainer = null;
+    data.seats.forEach(seat => {
+      if (seat.rowNumber !== currentRow) {
+        currentRow = seat.rowNumber;
+        const rowEl = document.createElement('div');
+        rowEl.className = 'seat-row';
+        const rowNum = document.createElement('div');
+        rowNum.className = 'row-number';
+        rowNum.textContent = currentRow;
+        rowEl.appendChild(rowNum);
+        seatsContainer = document.createElement('div');
+        seatsContainer.className = 'seats';
+        rowEl.appendChild(seatsContainer);
+        seatMapEl.appendChild(rowEl);
+      }
+      const seatEl = document.createElement('div');
+      seatEl.className = 'seat';
+      seatEl.textContent = seat.seatNumber;
+      seatEl.dataset.seatNumber = seat.seatNumber;
+      seatEl.dataset.seatId = seat.seatId;
+
+      switch (seat.status) {
+        case 'AVAILABLE':
+          seatEl.classList.add('available');
+          seatEl.onclick = () => toggleSeatSelection(seat, seatEl, passengerCount);
+          break;
+        case 'SOLD':
+          seatEl.classList.add('sold');
+          break;
+        case 'LOCKED':
+          seatEl.classList.add('locked');
+          break;
+        default:
+          seatEl.classList.add('sold');
+      }
+
+      seatsContainer.appendChild(seatEl);
+
+      if (seat.seatNumber.endsWith('C')) {
+        const aisle = document.createElement('div');
+        aisle.className = 'aisle';
+        seatsContainer.appendChild(aisle);
+      }
+    });
+  }
+
+  /* ===== 切换座位选择 ===== */
+  function toggleSeatSelection(seat, el, passengerCount) {
+    const idx = selectedSeats.findIndex(s => s.seatNumber === seat.seatNumber);
+    if (idx > -1) {
+      selectedSeats.splice(idx, 1);
+      el.classList.remove('selected');
+      el.classList.add('available');
+    } else {
+      if (selectedSeats.length >= passengerCount) {
+        alert(`最多只能选择${passengerCount}个座位`);
+        return;
+      }
+      selectedSeats.push(seat);
+      el.classList.remove('available');
+      el.classList.add('selected');
+    }
+    updateSelectedSeatsText();
+    const btn = document.getElementById('selectSeatBtn');
+    if (btn) btn.style.display = selectedSeats.length === passengerCount ? '' : 'none';
+  }
+
+  /* ===== 更新座位显示文本 ===== */
+  function updateSelectedSeatsText() {
+    const t = document.getElementById('selectedSeatsText');
+    if (t) t.textContent = selectedSeats.length ? selectedSeats.map(s=>s.seatNumber).join(', ') : '无';
+  }
+
+  /* ===== 生成乘客表单 ===== */
+  function generatePassengerForms() {
+    const count = parseInt(document.getElementById('passengerCount').value);
+    const wrap = document.getElementById('passengerForms');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+    for (let i=0;i<count;i++) {
+      const div = document.createElement('div');
+      div.className = 'passenger-form';
+      div.dataset.index = i;
+      div.innerHTML = `
+      <h4>乘客 ${i+1} ${i===0?'(联系人)':''}</h4>
+      <div><input id="passengerName${i}" placeholder="姓名" required /></div>
+      <div>
+        <select id="idType${i}">
+          <option value="ID_CARD">身份证</option>
+          <option value="PASSPORT">护照</option>
+          <option value="OTHER">其他</option>
+        </select>
+      </div>
+      <div><input id="idNumber${i}" placeholder="证件号码" required /></div>
+      <div><input id="phone${i}" placeholder="手机(11位)" required /></div>
+      <div><input id="email${i}" placeholder="邮箱(可选)" /></div>
+      <div>
+        <select id="passengerType${i}">
+          <option value="ADULT">成人</option>
+          <option value="CHILD">儿童</option>
+          <option value="STUDENT">学生</option>
+          <option value="SENIOR">老人</option>
+        </select>
+      </div>
+      <div>
+        <select id="seatPreference${i}">
+          <option value="WINDOW">靠窗</option>
+          <option value="AISLE">靠过道</option>
+          <option value="MIDDLE">中间</option>
+          <option value="ANY">任意</option>
+        </select>
+      </div>
+    `;
+      wrap.appendChild(div);
+    }
+  }
+
+  /* ===== 校验乘客表单 ===== */
+  function validatePassengerForms() {
+    const count = parseInt(document.getElementById('passengerCount').value);
+    let ok = true;
+    for (let i=0;i<count;i++) {
+      const name = document.getElementById(`passengerName${i}`).value.trim();
+      const idNumber = document.getElementById(`idNumber${i}`).value.trim();
+      const phone = document.getElementById(`phone${i}`).value.trim();
+      const email = document.getElementById(`email${i}`).value.trim();
+      if (!name || !idNumber || !/^\d{11}$/.test(phone)) ok = false;
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) ok = false;
+    }
+    if (!ok) alert('请检查乘客信息');
+    return ok;
+  }
+
+  /* ===== UUID 用作 clientToken ===== */
+  function generateUUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{
+      const r = Math.random()*16|0;
+      const v = c==='x'?r:(r&0x3|0x8);
+      return v.toString(16);
+    });
+  }
+
+  /* ===== 提交订单 ===== */
+  function submitOrder() {
+    if (!selectedFlight) {
+      alert('未选择航班');
+      return;
+    }
+    if (!validatePassengerForms()) return;
+
+    const count = parseInt(document.getElementById('passengerCount').value);
+    const passengers = [];
+    for (let i=0;i<count;i++) {
+      passengers.push({
+        passengerName: document.getElementById(`passengerName${i}`).value.trim(),
+        idType: document.getElementById(`idType${i}`).value,
+        idNumber: document.getElementById(`idNumber${i}`).value.trim(),
+        phone: document.getElementById(`phone${i}`).value.trim(),
+        email: document.getElementById(`email${i}`).value.trim(),
+        passengerType: document.getElementById(`passengerType${i}`).value,
+        seatPreference: document.getElementById(`seatPreference${i}`).value
+      });
+    }
+
+    const body = {
+      instanceId: selectedFlight.instanceId,
+      passengers,
+      seatNumbers: selectedSeats.map(s=>s.seatNumber),
+      contactPassengerIndex: 0,
+      clientToken: generateUUID(),
+      remark: document.getElementById('remark') ? document.getElementById('remark').value : ''
+    };
+
+    fetch('/api/bookings/', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(body)
+    })
+            .then(r => {
+              if (!r.ok) {
+                return r.json().then(err => { throw new Error(err.message||'提交失败'); });
+              }
+              return r.json();
+            })
+            .then(data => {
+              displayOrderResult(data,true);
+              goToStep(4);
+            })
+            .catch(e => {
+              displayOrderResult({message:e.message},false);
+              goToStep(4);
+            });
+  }
+
+  /* ===== 显示订单结果 ===== */
+  function displayOrderResult(data, success) {
+    const suc = document.getElementById('orderSuccess');
+    const err = document.getElementById('orderError');
+    if (!suc || !err) return;
+    suc.style.display = success ? '' : 'none';
+    err.style.display = success ? 'none' : '';
+
+    if (success) {
+      const fmt = s => new Date(s).toLocaleString();
+      document.getElementById('bookingId').textContent = data.bookingId;
+      document.getElementById('orderStatus').textContent = data.status === 'HOLD' ? '待支付' : data.status;
+      document.getElementById('resultFlightInfo').textContent =
+              `${data.flightInfo.flightNumber} ${data.flightInfo.airlineName} ${data.flightInfo.departAirport}->${data.flightInfo.arrivalAirport} ${fmt(data.flightInfo.departDatetime)}`;
+      document.getElementById('resultPassengerInfo').textContent =
+              data.passengerSeats.map(p=>p.passengerName).join(', ');
+      document.getElementById('resultSeatInfo').textContent =
+              data.passengerSeats.map(p=>p.seatNumber).join(', ');
+      document.getElementById('totalPrice').textContent = data.totalPrice;
+      document.getElementById('bookingTime').textContent = fmt(data.bookingTime);
+      document.getElementById('holdExpireAt').textContent = fmt(data.holdExpireAt);
+    } else {
+      document.getElementById('errorMessage').textContent = data.message||'未知错误';
+    }
+  }
+
+  /* ===== 重置流程 ===== */
+  function resetBooking() {
+    selectedFlight = null;
+    selectedSeats = [];
+    flights = [];
+    const flightList = document.getElementById('flightList');
+    if (flightList) flightList.innerHTML = '';
+    const seatMap = document.getElementById('seatMap');
+    if (seatMap) seatMap.innerHTML = '';
+    const selTxt = document.getElementById('selectedSeatsText');
+    if (selTxt) selTxt.textContent = '无';
+    const btn1 = document.getElementById('selectFlightBtn');
+    if (btn1) btn1.style.display = 'none';
+    const btn2 = document.getElementById('selectSeatBtn');
+    if (btn2) btn2.style.display = 'none';
+    goToStep(1);
+  }
+
+  /* ===== 页面加载默认查询 ===== */
+  window.addEventListener('load', () => {
+    try { searchFlights(); } catch(e){ console.warn(e); }
+    goToStep(1);
+  });
+</script>
+
+
 </body>
 </html>
